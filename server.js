@@ -26,52 +26,56 @@ app.use(bodyParser.json());
 
 // Get /todos
 app.get('/todos', function(req, res) {
-    var queryParams = req.query;
-    var filteredTodos = todos;
+    var query = req.query;
+    var where = {};
 
-    if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
-        filteredTodos = _.where(filteredTodos, {
-            completed: true
-        });
-    } else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
-        filteredTodos = _.where(filteredTodos, {
-            completed: false
-        });
+    if (query.hasOwnProperty('completed') && query.completed === 'true') {
+        where.completed = true;
+    } else if (query.hasOwnProperty('completed') && query.completed === 'false') {
+        where.completed = false;
     }
 
-    if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
-        filteredTodos = _.filter(filteredTodos, function(todo) {
-            return (todo.description.toLowerCase().indexOf(queryParams.q) > -1);
-        });
+    if (query.hasOwnProperty('q') && query.q.length > 0) {
+        where.description = {
+            $like: '%' + query.q + '%'
+        };
     }
 
-    res.json(filteredTodos);
+    db.todo.findAll({
+        where: where
+    }).then(function (filteredTodos) {
+        res.status(200).json(filteredTodos);
+    }, function (e) {
+        res.status(500).json(e);
+    });
 });
 
 // Get /todos/:id
 app.get('/todos/:id', function(req, res) {
     var todoId = parseInt(req.params.id, 10);
-    
-    db.todo.findById(todoId).then (function (todo) {
-        if (!!todo) {
-            res.status(200).json(todo.toJSON());
-        } else {
-            res.status(404).json({"error": "Todo not found"});
-        }
-    }, function (e) {
-        res.status(500).json(e);
-    })
-    /*var matchedTodo = _.findWhere(todos, {
-        id: todoId
-    });
 
-    if (matchedTodo) {
-        res.send(matchedTodo);
-    } else {
-        res.status(404).json({
-            "error": "todo not found"
+    db.todo.findById(todoId).then(function(todo) {
+            if (!!todo) {
+                res.status(200).json(todo.toJSON());
+            } else {
+                res.status(404).json({
+                    "error": "Todo not found"
+                });
+            }
+        }, function(e) {
+            res.status(500).json(e);
+        })
+        /*var matchedTodo = _.findWhere(todos, {
+            id: todoId
         });
-    }*/
+
+        if (matchedTodo) {
+            res.send(matchedTodo);
+        } else {
+            res.status(404).json({
+                "error": "todo not found"
+            });
+        }*/
 })
 
 // Get /
@@ -83,9 +87,9 @@ app.get('/', function(req, res) {
 app.post('/todos', function(req, res) {
     var body = _.pick(req.body, 'description', 'completed');
 
-    db.todo.create(body).then(function (todo) {
+    db.todo.create(body).then(function(todo) {
         res.status(200).json(todo.toJSON());
-    }, function (e) {
+    }, function(e) {
         res.status(400).json(e);
     });
 });
