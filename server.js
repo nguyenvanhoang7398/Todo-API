@@ -5,24 +5,8 @@ var db = require('./db.js');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
-var todos = [];
-var todoNextId = 1;
 
 app.use(bodyParser.json());
-
-/*var todos = [{
-    id: 1,
-    description: 'Complete CS1010 lab assignment',
-    completed: false
-}, {
-    id: 2,
-    description: 'Meeting with prof. for algorithms',
-    completed: false
-}, {
-    id: 3,
-    description: 'Jogging at NUS field',
-    completed: true
-}];*/
 
 // Get /todos
 app.get('/todos', function(req, res) {
@@ -45,8 +29,8 @@ app.get('/todos', function(req, res) {
         where: where
     }).then(function(filteredTodos) {
         res.status(200).json(filteredTodos);
-    }, function(e) {
-        res.status(500).json(e);
+    }, function() {
+        res.status(500).send()
     });
 });
 
@@ -62,20 +46,9 @@ app.get('/todos/:id', function(req, res) {
                     "error": "Todo not found"
                 });
             }
-        }, function(e) {
-            res.status(500).json(e);
+        }, function() {
+            res.status(500).send();
         })
-        /*var matchedTodo = _.findWhere(todos, {
-            id: todoId
-        });
-
-        if (matchedTodo) {
-            res.send(matchedTodo);
-        } else {
-            res.status(404).json({
-                "error": "todo not found"
-            });
-        }*/
 })
 
 // Get /
@@ -111,7 +84,7 @@ app.delete('/todos/:id', function(req, res) {
             res.status(204).send();
         }
     }).then(function() {
-        res.status(500);
+        res.status(500).send();
     });
 });
 
@@ -144,6 +117,16 @@ app.put('/todos/:id', function(req, res) {
         res.status(500).send();
     })
 });
+
+app.post('/users', function (req, res) {
+    var body = _.pick(req.body, 'email', 'password');
+
+    db.user.create(body).then(function (body) {
+        res.status(200).json(body.toJSON());
+    }, function (e) {
+        res.status(400).json(e);
+    })
+})
 
 db.sequelize.sync().then(function() {
     app.listen(PORT, function() {
