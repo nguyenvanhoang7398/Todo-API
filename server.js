@@ -40,16 +40,16 @@ app.get('/todos/:id', function(req, res) {
     var todoId = parseInt(req.params.id, 10);
 
     db.todo.findById(todoId).then(function(todo) {
-            if (!!todo) {
-                res.status(200).json(todo.toJSON());
-            } else {
-                res.status(404).json({
-                    "error": "Todo not found"
-                });
-            }
-        }, function() {
-            res.status(500).send();
-        })
+        if (!!todo) {
+            res.status(200).json(todo.toJSON());
+        } else {
+            res.status(404).json({
+                "error": "Todo not found"
+            });
+        }
+    }, function() {
+        res.status(500).send();
+    })
 })
 
 // Get /
@@ -120,28 +120,36 @@ app.put('/todos/:id', function(req, res) {
 });
 
 // POST /users
-app.post('/users', function (req, res) {
+app.post('/users', function(req, res) {
     var body = _.pick(req.body, 'email', 'password');
 
-    db.user.create(body).then(function (user) {
+    db.user.create(body).then(function(user) {
         res.status(200).json(user.toPublicJSON());
-    }, function (e) {
+    }, function(e) {
         res.status(400).json(e);
     });
 });
 
 // POST /users/login
-app.post('/users/login', function (req, res) {
+app.post('/users/login', function(req, res) {
     var body = _.pick(req.body, 'email', 'password');
 
-    db.user.authenticate(body).then(function (user) {
-        res.json(user.toPublicJSON());
-    }, function () {
+    db.user.authenticate(body).then(function(user) {
+        var token = user.generateToken('authentication');
+
+        if (token) {
+            res.header('Auth', user.generateToken('authentication')).json(user.toPublicJSON());
+        } else {
+            res.status(401).send();
+        }
+    }, function() {
         res.status(401).send();
     });
 })
 
-db.sequelize.sync({force: true}).then(function() {
+db.sequelize.sync({
+    force: true
+}).then(function() {
     app.listen(PORT, function() {
         console.log('Express listening on port ' + PORT + '!');
     });
