@@ -12,7 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "file:bcrypt@0.8.7",
+    //"bcrypt": "file:bcrypt@0.8.7",
+    "bcrypt": "^0.8.7",
     "body-parser": "^1.13.3",
     "express": "^4.13.3",
     "pg": "^6.1.0",
